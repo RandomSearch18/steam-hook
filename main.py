@@ -1,23 +1,21 @@
-from steam.webapi import WebAPI
 from dotenv import load_dotenv
 from os import getenv
 
+from steam_client import Steam
+
 
 def main():
-    steam = WebAPI(key=getenv("STEAM_API_KEY"))
+    steam = Steam(api_key=getenv("STEAM_API_KEY"))
 
     game = 504230
-    user = 
-    game_schema = steam.call("ISteamUserStats.GetSchemaForGame", appid=game)
+    user = getenv("STEAM_USER_ID")
+    game_schema = steam.fetch_game_schema(appid=game)
     achievements = game_schema["game"]["availableGameStats"]["achievements"]
     print(game_schema)
-    user_achievements = steam.call(
-        "ISteamUserStats.GetPlayerAchievements", appid=game, steamid=user
-    )
+    owned_games = steam.fetch_owned_games(steam_id=user)
+    user_achievements = steam.fetch_player_achievements(app_id=game, steam_id=user)
     print(user_achievements)
-    global_achievements = steam.call(
-        "ISteamUserStats.GetGlobalAchievementPercentagesForApp", gameid=game
-    )
+    global_achievements = steam.fetch_global_achievement_percentages(app_id=game)
     print(global_achievements)
 
 
