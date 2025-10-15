@@ -1,3 +1,4 @@
+from typing import Callable
 from requests import HTTPError
 from steam.webapi import WebAPI
 
@@ -15,6 +16,9 @@ class Steam:
         self.client = WebAPI(key=api_key)
         # A map of Steam (player) IDs to their achievement matrices
         self.players_achievements_matrices: dict[int, PlayerAchievementsMatrix] = {}
+        self.handle_newly_earned_achievement: Callable[[int, int, str]] = (
+            lambda steam_id, app_id, achievement_id: None
+        )
 
     def fetch_game_schema(self, appid: int):
         return self.client.call("ISteamUserStats.GetSchemaForGame", appid=appid)
