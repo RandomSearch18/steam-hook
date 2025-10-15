@@ -47,7 +47,7 @@ class Steam:
 
     def fetch_recently_played_games(self, steam_id: int):
         return self.client.call(
-            "IPlayerService.GetRecentlyPlayedGames", steamid=steam_id
+            "IPlayerService.GetRecentlyPlayedGames", steamid=steam_id, count=0
         )
 
     def create_achievement_set_for_game(
