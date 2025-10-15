@@ -20,3 +20,16 @@ class Steam:
         return self.client.call(
             "ISteamUserStats.GetGlobalAchievementPercentagesForApp", gameid=app_id
         )
+
+    def fetch_owned_games(self, steam_id: int):
+        return self.client.call(
+            "IPlayerService.GetOwnedGames",
+            steamid=steam_id,
+            include_appinfo=True,
+            include_played_free_games=True,
+        )
+
+    def fetch_recently_played_games(self, steam_id: int):
+        return self.client.call(
+            "IPlayerService.GetRecentlyPlayedGames", steamid=steam_id
+        )
