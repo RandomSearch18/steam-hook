@@ -1,6 +1,4 @@
 from flask import Flask
-from threading import Thread
-
 from steam_tracker import steam_wrapper
 
 app = Flask(__name__)
