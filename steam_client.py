@@ -1,3 +1,4 @@
+from requests import HTTPError
 from steam.webapi import WebAPI
 
 # A map of internal achievement names to whether the player has achieved them
@@ -51,4 +52,29 @@ class Steam:
             pass
         else:
             # Fetch all their games so that we have all info possible to use as a base for comparisons (in the future)
-            games = self.fetch_owned_games(steam_id)["games"]
+            games = self.fetch_owned_games(steam_id)["response"]["games"]
+            achievements_matrix: PlayerAchievementsMatrix = {}
+            for game in games:
+                app_id = game["appid"]
+                try:
+                    player_achievements_data = self.fetch_player_achievements(
+                        app_id=app_id, steam_id=steam_id
+                    )["playerstats"]
+                except HTTPError as error:
+                    # Some games don't have stats at all, and get angry if you ask them about it
+                    # (Error message from API is "Requested app has no stats")
+                    if error.response.status_code == 400:
+                        continue
+                    else:
+                        raise error
+                if "achievements" not in player_achievements_data:
+                    # Some games don't have achievements
+                    continue
+                player_achievements = player_achievements_data["achievements"]
+                achievements_dict = {
+                    achievement["apiname"]: bool(achievement["achieved"])
+                    for achievement in player_achievements
+                }
+                achievements_matrix[app_id] = achievements_dict
+            self.players_achievements_matrices[steam_id] = achievements_matrix
+        return self.players_achievements_matrices[steam_id]
