@@ -2,9 +2,9 @@ from requests import HTTPError
 from steam.webapi import WebAPI
 
 # A map of internal achievement names to whether the player has achieved them
-type GameAchievementsDict = dict[str, bool]
+type GameEarnedAchievements = set[str]
 # A map of game IDs to achievement dictionaries
-type PlayerAchievementsMatrix = dict[int, GameAchievementsDict]
+type PlayerAchievementsMatrix = dict[int, GameEarnedAchievements]
 
 
 class Steam:
@@ -46,9 +46,9 @@ class Steam:
             "IPlayerService.GetRecentlyPlayedGames", steamid=steam_id
         )
 
-    def create_achievement_dict_for_game(
+    def create_achievement_set_for_game(
         self, app_id: int, steam_id: int
-    ) -> GameAchievementsDict:
+    ) -> GameEarnedAchievements:
         try:
             player_achievements_data = self.fetch_player_achievements(
                 app_id=app_id, steam_id=steam_id
@@ -57,18 +57,19 @@ class Steam:
             # Some games don't have stats at all, and get angry if you ask them about it
             # (Error message from API is "Requested app has no stats")
             if error.response.status_code == 400:
-                return {}
+                return set()
             else:
                 raise error
         if "achievements" not in player_achievements_data:
             # Some games don't have achievements
-            return {}
+            return set()
         player_achievements = player_achievements_data["achievements"]
-        achievements_dict = {
-            achievement["apiname"]: bool(achievement["achieved"])
+        achievements_set = {
+            achievement["apiname"]
             for achievement in player_achievements
+            if achievement["achieved"]
         }
-        return achievements_dict
+        return achievements_set
 
     def update_player_achievement_matrix(self, steam_id: int):
         if steam_id in self.players_achievements_matrices:
@@ -80,25 +81,30 @@ class Steam:
                 app_id = game["appid"]
                 if app_id not in our_matrix:
                     # This is probably a newly-purchased game! We should discover its achievements
-                    achievements_dict = self.create_achievement_dict_for_game(
+                    achievements_dict = self.create_achievement_set_for_game(
                         app_id=app_id, steam_id=steam_id
                     )
                     our_matrix[app_id] = achievements_dict
                 else:
                     old_achievements = our_matrix[app_id]
-                    new_achievements = self.create_achievement_dict_for_game(
+                    new_achievements = self.create_achievement_set_for_game(
                         app_id=app_id, steam_id=steam_id
                     )
                     # TODO: compare!
-
-            pass
+                    newly_earned = new_achievements - old_achievements
+                    for achievement_id in newly_earned:
+                        self.handle_newly_earned_achievement(
+                            steam_id, app_id, achievement_id
+                        )
+                    our_matrix[app_id] = new_achievements
+                    return our_matrix
         else:
             # Fetch all their games so that we have all info possible to use as a base for comparisons (in the future)
             games = self.fetch_owned_games(steam_id)["response"]["games"]
             achievements_matrix: PlayerAchievementsMatrix = {}
             for game in games:
                 app_id = game["appid"]
-                achievements_dict = self.create_achievement_dict_for_game(
+                achievements_dict = self.create_achievement_set_for_game(
                     app_id=app_id, steam_id=steam_id
                 )
                 achievements_matrix[app_id] = achievements_dict
