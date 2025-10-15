@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from steam_tracker import steam_wrapper
 
 app = Flask(__name__)
@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     steam = steam_wrapper()
-    return f"Hello :p {steam.players_achievements_matrices if steam else 'Steam not initialized'}"
+    return render_template("debug.html", steam=steam)
 
 
 def run_web_ui():
