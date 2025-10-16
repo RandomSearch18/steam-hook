@@ -7,8 +7,10 @@
 We use Python and `uv` because we're cool like that. Make sure you have those things installed, and then
 
 ```bash
-uv sync # Create the venv, be sure to update the interpreter path in VSCode
-uv run main.py
+# Create the venv (be sure to then update the interpreter path in VSCode)
+uv sync
+# Run the app!
+uv run flask --app steam_hook run --debug
 ```
 
 ## Roadmap
