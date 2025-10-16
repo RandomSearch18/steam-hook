@@ -1,6 +1,6 @@
 from os import getenv
 from time import sleep
-from steam_client import Steam
+from steam_hook.steam_client import Steam
 
 steam: Steam | None = None
 
